@@ -8,20 +8,23 @@ import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { ListGatewayInterface } from './gateways/list-gateways-interface';
 import { List } from './entities/list.entity';
+import EventEmitter from 'events';
+import { ListEventCreated } from './events/list-event-created';
 
 @Injectable()
 export class ListsService {
   constructor(
     @Inject('ListPersistGateway')
     private listPersistGateway: ListGatewayInterface, //porta
-    @Inject('ListIntegrateGateway')
-    private listIntegrateGateway: ListGatewayInterface, //porta2
+    @Inject('EventEmitter')
+    private eventEmitter: EventEmitter, // @Inject('ListIntegrateGateway') // private listIntegrateGateway: ListGatewayInterface, //porta2
   ) {}
 
   async create(createListDto: CreateListDto) {
     const list = new List(createListDto.name);
     await this.listPersistGateway.create(list);
-    await this.listIntegrateGateway.create(list);
+    this.eventEmitter.emit('list.created', new ListEventCreated(list));
+    // await this.listIntegrateGateway.create(list);
     return list;
   }
 
